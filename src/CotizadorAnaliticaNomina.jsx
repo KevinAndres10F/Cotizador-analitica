@@ -104,8 +104,8 @@ const PREGUNTAS = [
   },
   {
     id: "personalizacion", icon: Sparkles,
-    q: "¿Nivel de personalización de KPIs y visuales?",
-    op: [["Plantilla estándar", 0], ["Algunos ajustes", 2], ["Tablero altamente personalizado", 4]],
+    q: "¿Cuántos tableros personalizados requiere el cliente?",
+    op: [["1 tablero estándar", 0], ["2 a 3 tableros", 2], ["4 o más tableros", 4]],
   },
   {
     id: "historico", icon: FileText,
