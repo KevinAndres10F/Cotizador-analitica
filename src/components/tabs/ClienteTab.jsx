@@ -138,7 +138,8 @@ export default function ClienteTab({ cliente, setCliente, entidades, setEntidade
             Con <b>{empleados.toLocaleString("es-EC")}</b> empleados
             {entidades.length > 1 && <> en <b>{entidades.length}</b> razones sociales</>},
             la mensualidad base es <b className="mono">{money(q.mensualEfectiva)}/mes</b>.
-            {q.diluirImpl && <> Incluye implementación prorrateada en {q.mesesDilucion} meses.</>}
+            {q.prorrateoActivo && <> Incluye implementación prorrateada en {q.mesesDilucion} meses.</>}
+            {!q.cobraImpl && <> Sin costo de implementación.</>}
           </p>
         </div>
       </Card>
