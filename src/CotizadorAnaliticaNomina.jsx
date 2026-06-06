@@ -44,8 +44,25 @@ export default function CotizadorAnaliticaNomina() {
   const { saveQuote, loadQuotes, loadQuote, quotes, saving, loading, error: dbError } = useQuotes();
   const [showLoadModal, setShowLoadModal] = useState(false);
 
+  const empleados = useMemo(() => entidades.reduce((s, e) => s + e.empleados, 0), [entidades]);
+
+  const score = useMemo(
+    () => PREGUNTAS.reduce((s, p) => s + (resp[p.id] != null ? p.op[resp[p.id]][1] : 0), 0),
+    [resp]
+  );
+  const maxScore = useMemo(() => PREGUNTAS.reduce((s, p) => s + Math.max(...p.op.map(o => o[1])), 0), []);
+  const respondidas = useMemo(() => Object.keys(resp).length, [resp]);
+  const nivel = score >= cfg.umbralAlta ? "ALTA" : score >= cfg.umbralMedia ? "MEDIA" : "BAJA";
+  const nivelColor = { BAJA: C.green2, MEDIA: C.orange, ALTA: "#c0392b" }[nivel];
+
+  const q = useMemo(() => calcularCotizacion({
+    empleados, usuarios, mesesHist, integraciones, kpis, reportes, nivel, cfg, entidades, diluirImpl, mesesDilucion,
+  }), [empleados, usuarios, mesesHist, integraciones, kpis, reportes, nivel, cfg, entidades, diluirImpl, mesesDilucion]);
+
+  const exportProps = { q, cfg, cliente, empleados, entidades, nivel, integraciones, kpis, reportes, mesesHist };
+
   const handleSave = useCallback(async () => {
-    const resultado = { ...q, nivel, score: score, empleados, usuarios, mesesHist, integraciones, kpis, reportes, diluirImpl, mesesDilucion };
+    const resultado = { ...q, nivel, score, empleados, usuarios, mesesHist, integraciones, kpis, reportes, diluirImpl, mesesDilucion };
     await saveQuote({ ref: cliente.ref, cliente, entidades, cfg, resp, resultado });
   }, [q, nivel, score, empleados, usuarios, mesesHist, integraciones, kpis, reportes, diluirImpl, mesesDilucion, cliente, entidades, cfg, resp, saveQuote]);
 
@@ -72,23 +89,6 @@ export default function CotizadorAnaliticaNomina() {
     }
     setShowLoadModal(false);
   }, [loadQuote]);
-
-  const empleados = useMemo(() => entidades.reduce((s, e) => s + e.empleados, 0), [entidades]);
-
-  const score = useMemo(
-    () => PREGUNTAS.reduce((s, p) => s + (resp[p.id] != null ? p.op[resp[p.id]][1] : 0), 0),
-    [resp]
-  );
-  const maxScore = useMemo(() => PREGUNTAS.reduce((s, p) => s + Math.max(...p.op.map(o => o[1])), 0), []);
-  const respondidas = useMemo(() => Object.keys(resp).length, [resp]);
-  const nivel = score >= cfg.umbralAlta ? "ALTA" : score >= cfg.umbralMedia ? "MEDIA" : "BAJA";
-  const nivelColor = { BAJA: C.green2, MEDIA: C.orange, ALTA: "#c0392b" }[nivel];
-
-  const q = useMemo(() => calcularCotizacion({
-    empleados, usuarios, mesesHist, integraciones, kpis, reportes, nivel, cfg, entidades, diluirImpl, mesesDilucion,
-  }), [empleados, usuarios, mesesHist, integraciones, kpis, reportes, nivel, cfg, entidades, diluirImpl, mesesDilucion]);
-
-  const exportProps = { q, cfg, cliente, empleados, entidades, nivel, integraciones, kpis, reportes, mesesHist };
 
   const TABS = [
     ["cliente", "Cliente", Building2],
