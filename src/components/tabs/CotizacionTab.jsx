@@ -31,12 +31,12 @@ export default function CotizacionTab({ q, cfg, empleados, nivel, nivelColor, re
         </div>
       )}
 
-      {/* prorrateo toggle — solo visible en complejidad ALTA */}
+      {/* prorrateo toggle — solo visible cuando se cobra implementación */}
       {q.cobraImpl ? (
         <Card pad="p-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <div className="text-sm" style={{ fontWeight: 600 }}>Prorrateo de implementación <span className="text-xs" style={{ color: nivelColor }}>(complejidad ALTA)</span></div>
+              <div className="text-sm" style={{ fontWeight: 600 }}>Prorrateo de implementación <span className="text-xs" style={{ color: nivelColor }}>(complejidad {nivel})</span></div>
               <div className="text-xs" style={{ color: C.sub }}>
                 {diluirImpl
                   ? `Implementación (${money(q.implementacion)}) diluida en ${mesesDilucion} meses = ${money2(q.prorrateoPorMes)}/mes adicional`
