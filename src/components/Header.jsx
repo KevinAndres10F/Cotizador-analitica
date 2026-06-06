@@ -1,8 +1,8 @@
 import React from "react";
-import { Gauge, Eye, EyeOff, Printer, FileSpreadsheet, FileDown } from "lucide-react";
+import { Gauge, Eye, EyeOff, Printer, FileSpreadsheet, FileDown, Save, FolderOpen, Loader2 } from "lucide-react";
 import { C } from "../config/colors";
 
-export default function Header({ vista, setVista, onPrint, onExportExcel, onExportCSV }) {
+export default function Header({ vista, setVista, onPrint, onExportExcel, onExportCSV, onSave, onLoad, saving }) {
   return (
     <div className="no-print" style={{ background: C.teal }}>
       <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
@@ -19,12 +19,23 @@ export default function Header({ vista, setVista, onPrint, onExportExcel, onExpo
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button onClick={() => setVista(vista === "cliente" ? "interna" : "cliente")}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm tabbtn"
             style={{ background: vista === "interna" ? C.orange : "rgba(255,255,255,.12)", color: "#fff", fontWeight: 600 }}>
             {vista === "interna" ? <Eye size={15} /> : <EyeOff size={15} />}
             {vista === "interna" ? "Vista interna" : "Vista cliente"}
+          </button>
+          <button onClick={onSave} disabled={saving}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm tabbtn"
+            style={{ background: "rgba(255,255,255,.12)", color: "#fff", fontWeight: 600, opacity: saving ? 0.6 : 1 }}>
+            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+            {saving ? "Guardando..." : "Guardar"}
+          </button>
+          <button onClick={onLoad}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm tabbtn"
+            style={{ background: "rgba(255,255,255,.12)", color: "#fff", fontWeight: 600 }}>
+            <FolderOpen size={15} /> Cargar
           </button>
           <button onClick={onExportExcel}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm tabbtn"

@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Building2, ClipboardCheck, SlidersHorizontal, Calculator, Workflow, Settings2,
 } from "lucide-react";
 import { C } from "./config/colors";
 import { DEFAULTS, PREGUNTAS, CHECKLIST } from "./config/defaults";
 import { calcularCotizacion } from "./pricing/engine";
+import { useQuotes } from "./hooks/useQuotes";
 import Header from "./components/Header";
 import SummaryRail from "./components/SummaryRail";
 import ClienteTab from "./components/tabs/ClienteTab";
@@ -39,6 +40,38 @@ export default function CotizadorAnaliticaNomina() {
 
   const [resp, setResp] = useState({});
   const [check, setCheck] = useState(Array(CHECKLIST.length).fill(false));
+
+  const { saveQuote, loadQuotes, loadQuote, quotes, saving, loading, error: dbError } = useQuotes();
+  const [showLoadModal, setShowLoadModal] = useState(false);
+
+  const handleSave = useCallback(async () => {
+    const resultado = { ...q, nivel, score: score, empleados, usuarios, mesesHist, integraciones, kpis, reportes, diluirImpl, mesesDilucion };
+    await saveQuote({ ref: cliente.ref, cliente, entidades, cfg, resp, resultado });
+  }, [q, nivel, score, empleados, usuarios, mesesHist, integraciones, kpis, reportes, diluirImpl, mesesDilucion, cliente, entidades, cfg, resp, saveQuote]);
+
+  const handleLoad = useCallback(async () => {
+    await loadQuotes();
+    setShowLoadModal(true);
+  }, [loadQuotes]);
+
+  const handleSelectQuote = useCallback(async (id) => {
+    const data = await loadQuote(id);
+    if (!data) return;
+    setCliente(data.cliente);
+    setEntidades(data.entidades);
+    if (data.configuracion) setCfg(data.configuracion);
+    if (data.diagnostico) setResp(data.diagnostico);
+    if (data.resultado) {
+      setUsuarios(data.resultado.usuarios ?? 3);
+      setMesesHist(data.resultado.mesesHist ?? 12);
+      setIntegraciones(data.resultado.integraciones ?? 0);
+      setKpis(data.resultado.kpis ?? 0);
+      setReportes(data.resultado.reportes ?? 0);
+      setDiluirImpl(data.resultado.diluirImpl ?? true);
+      setMesesDilucion(data.resultado.mesesDilucion ?? 36);
+    }
+    setShowLoadModal(false);
+  }, [loadQuote]);
 
   const empleados = useMemo(() => entidades.reduce((s, e) => s + e.empleados, 0), [entidades]);
 
@@ -88,6 +121,8 @@ export default function CotizadorAnaliticaNomina() {
         onPrint={() => window.print()}
         onExportExcel={() => exportExcel({ ...exportProps, vista })}
         onExportCSV={() => exportCSV(exportProps)}
+        onSave={handleSave} onLoad={handleLoad}
+        saving={saving}
       />
 
       {/* Tabs */}
@@ -172,6 +207,37 @@ export default function CotizadorAnaliticaNomina() {
       <div className="no-print text-center py-6 text-xs" style={{ color: C.sub }}>
         KAPI Service Group · Quito, Ecuador — herramienta interna de cotización
       </div>
+
+      {showLoadModal && (
+        <div className="no-print fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)" }}>
+          <div className="rounded-2xl p-6 w-full max-w-lg mx-4" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="serif" style={{ fontSize: 18, fontWeight: 600 }}>Cargar cotización</h3>
+              <button onClick={() => setShowLoadModal(false)} className="text-sm px-3 py-1 rounded-lg" style={{ color: C.sub }}>Cerrar</button>
+            </div>
+            {loading && <p className="text-sm" style={{ color: C.sub }}>Cargando...</p>}
+            {dbError && <p className="text-sm" style={{ color: "#dc2626" }}>{dbError}</p>}
+            {!loading && quotes.length === 0 && <p className="text-sm" style={{ color: C.sub }}>No hay cotizaciones guardadas.</p>}
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {quotes.map((qt) => (
+                <button key={qt.id} onClick={() => handleSelectQuote(qt.id)}
+                  className="w-full text-left rounded-xl p-3 transition hover:bg-gray-50"
+                  style={{ border: `1px solid ${C.line}` }}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-sm" style={{ fontWeight: 600 }}>{qt.cliente?.empresa || "(sin nombre)"}</div>
+                      <div className="mono text-xs" style={{ color: C.sub }}>{qt.ref}</div>
+                    </div>
+                    <div className="text-xs" style={{ color: C.sub }}>
+                      {new Date(qt.updated_at).toLocaleDateString("es-EC")}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
