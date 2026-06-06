@@ -39,6 +39,7 @@ export const DEFAULTS = {
     { hasta: 300, pct: 0.3 },
     { hasta: Infinity, pct: 0.35 },
   ],
+  implNivel: "ALTA",
   umbralMedia: 11,
   umbralAlta: 21,
 };
