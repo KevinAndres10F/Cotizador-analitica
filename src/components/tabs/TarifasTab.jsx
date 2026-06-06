@@ -59,6 +59,55 @@ export default function TarifasTab({ cfg, setCfg }) {
           <Field label="Recargo por entidad adicional">
             <NumInput v={cfg.recargoPorEntidad} pre="$" set={(x) => setCfg({ ...cfg, recargoPorEntidad: x })} small />
           </Field>
+          <div className="text-xs mt-4 mb-2" style={{ color: C.sub, fontWeight: 700 }}>COBRO DE IMPLEMENTACIÓN</div>
+          <Field label="Se cobra desde nivel">
+            <div className="flex gap-2">
+              {["BAJA", "MEDIA", "ALTA"].map((n) => {
+                const active = cfg.implNivel === n;
+                const colMap = { BAJA: C.green2, MEDIA: C.orange, ALTA: "#c0392b" };
+                return (
+                  <button key={n} onClick={() => setCfg({ ...cfg, implNivel: n })}
+                    className="flex-1 py-2 rounded-xl text-sm transition"
+                    style={{
+                      background: active ? colMap[n] + "18" : C.paper,
+                      border: `1.5px solid ${active ? colMap[n] : C.line}`,
+                      color: active ? colMap[n] : C.sub,
+                      fontWeight: active ? 700 : 500,
+                    }}>
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="text-xs mt-1.5" style={{ color: C.sub }}>
+              {cfg.implNivel === "BAJA" && "Todos los niveles pagan implementación"}
+              {cfg.implNivel === "MEDIA" && "MEDIA y ALTA pagan implementación · BAJA sin cargo"}
+              {cfg.implNivel === "ALTA" && "Solo ALTA paga implementación · BAJA y MEDIA sin cargo"}
+            </div>
+          </Field>
+
+          <div className="text-xs mt-4 mb-2" style={{ color: C.sub, fontWeight: 700 }}>RECARGO POR ESCALA (empleados)</div>
+          {cfg.recargoEscala.map((b, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 py-1.5">
+              <span className="text-sm mono" style={{ color: C.sub }}>
+                ≤ {b.hasta === Infinity ? "∞" : b.hasta.toLocaleString("es-EC")}
+              </span>
+              <NumInput v={b.monto} pre="$" step={50}
+                set={(x) => { const nr = [...cfg.recargoEscala]; nr[i] = { ...nr[i], monto: x }; setCfg({ ...cfg, recargoEscala: nr }); }} small />
+            </div>
+          ))}
+
+          <div className="text-xs mt-4 mb-2" style={{ color: C.sub, fontWeight: 700 }}>RECARGO POR HISTÓRICO (meses)</div>
+          {cfg.recargoHistorico.map((b, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 py-1.5">
+              <span className="text-sm mono" style={{ color: C.sub }}>
+                ≤ {b.hasta === Infinity ? "∞" : b.hasta} meses
+              </span>
+              <NumInput v={b.monto} pre="$" step={50}
+                set={(x) => { const nr = [...cfg.recargoHistorico]; nr[i] = { ...nr[i], monto: x }; setCfg({ ...cfg, recargoHistorico: nr }); }} small />
+            </div>
+          ))}
+
           <div className="text-xs mt-4 mb-2" style={{ color: C.sub, fontWeight: 700 }}>UMBRALES DE COMPLEJIDAD (puntos)</div>
           <div className="grid grid-cols-2 gap-3">
             <Field label={`MEDIA ≥`}><NumInput v={cfg.umbralMedia} set={(x) => setCfg({ ...cfg, umbralMedia: x })} small /></Field>
