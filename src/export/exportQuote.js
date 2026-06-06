@@ -13,11 +13,11 @@ function buildClienteRows(cliente, empleados, entidades, nivel, q) {
     ["Complejidad", nivel],
     [""],
     ["SUSCRIPCIÓN MENSUAL", q.mensualEfectiva.toFixed(2)],
-    ...(q.diluirImpl
+    ...(q.prorrateoActivo
       ? [["  (Base mensual)", q.mensual.toFixed(2)],
          [`  (Prorrateo impl. ${q.mesesDilucion}m)`, q.prorrateoPorMes.toFixed(2)]]
       : []),
-    ...(!q.diluirImpl ? [["IMPLEMENTACIÓN (PAGO ÚNICO)", q.implementacion.toFixed(2)]] : []),
+    ...(q.cobraImpl && !q.prorrateoActivo ? [["IMPLEMENTACIÓN (PAGO ÚNICO)", q.implCobrable.toFixed(2)]] : []),
     ["TOTAL ANUAL", q.anualTotal.toFixed(2)],
   ];
 }
@@ -31,7 +31,7 @@ function buildDesgloseRows(q, cfg, empleados, integraciones, kpis, reportes, mes
   ];
   if (q.extraUsuarios > 0) rows.push([`Usuarios adicionales (${q.extraUsuarios})`, q.usuariosCosto.toFixed(2)]);
   if (q.mensualPiso) rows.push(["Ajuste a piso mínimo", (q.mensual - (cfg.basePlataforma + q.tramos + q.usuariosCosto)).toFixed(2)]);
-  if (q.diluirImpl) rows.push([`Prorrateo implementación (${q.mesesDilucion}m)`, q.prorrateoPorMes.toFixed(2)]);
+  if (q.prorrateoActivo) rows.push([`Prorrateo implementación (${q.mesesDilucion}m)`, q.prorrateoPorMes.toFixed(2)]);
   rows.push(["TOTAL MENSUAL", q.mensualEfectiva.toFixed(2)]);
   rows.push(["", ""]);
   rows.push(["--- IMPLEMENTACIÓN ---", ""]);
@@ -58,7 +58,7 @@ function buildSplitRows(q) {
     ["CONCEPTO", "MANPOWER", "KAPI"],
     [`Mensual (split ${(q.margen * 100).toFixed(0)}%)`, q.mpMensual.toFixed(2), q.kapiMensual.toFixed(2)],
     ["Anual", q.mpAnual.toFixed(2), q.kapiAnual.toFixed(2)],
-    ...(!q.diluirImpl ? [["Implementación", q.mpImpl.toFixed(2), q.kapiImpl.toFixed(2)]] : []),
+    ...(q.cobraImpl && !q.prorrateoActivo ? [["Implementación", q.mpImpl.toFixed(2), q.kapiImpl.toFixed(2)]] : []),
   ];
 }
 

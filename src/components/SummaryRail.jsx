@@ -20,16 +20,16 @@ export default function SummaryRail({ cliente, empleados, usuarios, nivel, nivel
             <div style={{ borderTop: "1px solid rgba(255,255,255,.12)", margin: "6px 0" }} />
             <div className="flex justify-between items-end">
               <span className="text-xs" style={{ color: "#9fc9bd" }}>
-                {q.diluirImpl ? "Mensual (c/ impl.)" : "Mensual"}
+                {q.prorrateoActivo ? "Mensual (c/ impl.)" : "Mensual"}
               </span>
               <span className="serif" style={{ fontSize: 22, fontWeight: 700, color: "#fff" }}>
                 {money(q.mensualEfectiva)}
               </span>
             </div>
-            {!q.diluirImpl && (
+            {q.cobraImpl && !q.prorrateoActivo && (
               <div className="flex justify-between items-end">
                 <span className="text-xs" style={{ color: "#9fc9bd" }}>Implementación</span>
-                <span className="serif" style={{ fontSize: 22, fontWeight: 700, color: C.green }}>{money(q.implementacion)}</span>
+                <span className="serif" style={{ fontSize: 22, fontWeight: 700, color: C.green }}>{money(q.implCobrable)}</span>
               </div>
             )}
             <div style={{ borderTop: "1px solid rgba(255,255,255,.12)", margin: "6px 0" }} />

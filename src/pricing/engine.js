@@ -38,26 +38,30 @@ export function calcularCotizacion({ empleados, usuarios, mesesHist, integracion
   const recEntidades = (entidades.length - 1) * (cfg.recargoPorEntidad || 0);
   const implementacion = base + recEscala + recHist + adecMonto + recEntidades;
 
-  const prorrateoPorMes = implementacion / Math.max(1, mesesDilucion);
-  const prorrateoPorEmpleado = implementacion / Math.max(1, emp) / Math.max(1, mesesDilucion);
+  const cobraImpl = nivel === "ALTA";
+  const implCobrable = cobraImpl ? implementacion : 0;
+  const prorrateoActivo = cobraImpl && diluirImpl;
+  const prorrateoPorMes = prorrateoActivo ? implCobrable / Math.max(1, mesesDilucion) : 0;
+  const prorrateoPorEmpleado = prorrateoActivo ? implCobrable / Math.max(1, emp) / Math.max(1, mesesDilucion) : 0;
   const mensualConProrrateo = mensual + prorrateoPorMes;
 
   const margen = cfg.splitMode === "fijo"
     ? cfg.splitManpower
     : buscarBanda(emp, cfg.margenManpower, "pct");
 
-  const mensualEfectiva = diluirImpl ? mensualConProrrateo : mensual;
+  const mensualEfectiva = prorrateoActivo ? mensualConProrrateo : mensual;
 
   return {
     tramos, usuariosCosto, extraUsuarios, mensual, mensualPiso: mensual > mensualBruto,
     base, recEscala, recHist, adecMonto, recEntidades, implementacion,
+    cobraImpl, implCobrable,
     margen,
-    diluirImpl, mesesDilucion, prorrateoPorMes, prorrateoPorEmpleado, mensualConProrrateo,
+    diluirImpl, prorrateoActivo, mesesDilucion, prorrateoPorMes, prorrateoPorEmpleado, mensualConProrrateo,
     mensualEfectiva,
     mpMensual: mensualEfectiva * margen,
     kapiMensual: mensualEfectiva * (1 - margen),
-    mpImpl: diluirImpl ? 0 : implementacion * margen,
-    kapiImpl: diluirImpl ? 0 : implementacion * (1 - margen),
+    mpImpl: prorrateoActivo ? 0 : implCobrable * margen,
+    kapiImpl: prorrateoActivo ? 0 : implCobrable * (1 - margen),
     anualTotal: mensualEfectiva * 12,
     mpAnual: mensualEfectiva * margen * 12,
     kapiAnual: mensualEfectiva * (1 - margen) * 12,

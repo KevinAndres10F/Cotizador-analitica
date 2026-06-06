@@ -31,54 +31,65 @@ export default function CotizacionTab({ q, cfg, empleados, nivel, nivelColor, re
         </div>
       )}
 
-      {/* prorrateo toggle */}
-      <Card pad="p-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div>
-            <div className="text-sm" style={{ fontWeight: 600 }}>Prorrateo de implementación</div>
-            <div className="text-xs" style={{ color: C.sub }}>
-              {diluirImpl
-                ? `Implementación (${money(q.implementacion)}) diluida en ${mesesDilucion} meses = ${money2(q.prorrateoPorMes)}/mes adicional`
-                : "Implementación se cobra como pago único separado"}
+      {/* prorrateo toggle — solo visible en complejidad ALTA */}
+      {q.cobraImpl ? (
+        <Card pad="p-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div className="text-sm" style={{ fontWeight: 600 }}>Prorrateo de implementación <span className="text-xs" style={{ color: nivelColor }}>(complejidad ALTA)</span></div>
+              <div className="text-xs" style={{ color: C.sub }}>
+                {diluirImpl
+                  ? `Implementación (${money(q.implementacion)}) diluida en ${mesesDilucion} meses = ${money2(q.prorrateoPorMes)}/mes adicional`
+                  : "Implementación se cobra como pago único separado"}
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {diluirImpl && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: C.sub }}>Meses:</span>
+                  <Stepper value={mesesDilucion} onChange={setMesesDilucion} min={6} max={60} step={6} />
+                </div>
+              )}
+              <button onClick={() => setDiluirImpl(!diluirImpl)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm transition"
+                style={{ background: diluirImpl ? C.mint : C.paper, border: `1px solid ${diluirImpl ? C.green2 : C.line}`, color: diluirImpl ? C.green2 : C.sub, fontWeight: 600 }}>
+                {diluirImpl ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+                {diluirImpl ? "Activo" : "Inactivo"}
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {diluirImpl && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs" style={{ color: C.sub }}>Meses:</span>
-                <Stepper value={mesesDilucion} onChange={setMesesDilucion} min={6} max={60} step={6} />
-              </div>
-            )}
-            <button onClick={() => setDiluirImpl(!diluirImpl)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm transition"
-              style={{ background: diluirImpl ? C.mint : C.paper, border: `1px solid ${diluirImpl ? C.green2 : C.line}`, color: diluirImpl ? C.green2 : C.sub, fontWeight: 600 }}>
-              {diluirImpl ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-              {diluirImpl ? "Activo" : "Inactivo"}
-            </button>
+        </Card>
+      ) : (
+        <Card pad="p-4" style={{ background: C.mint, border: "none" }}>
+          <div className="text-sm" style={{ color: C.teal, fontWeight: 600 }}>
+            Complejidad {nivel} — sin costo de implementación
           </div>
-        </div>
-      </Card>
+          <div className="text-xs mt-1" style={{ color: "#356b60" }}>
+            La implementación se incluye sin cargo adicional para complejidad baja y media.
+          </div>
+        </Card>
+      )}
 
       {/* totales */}
-      <div className={`grid grid-cols-1 ${diluirImpl ? "" : "sm:grid-cols-2"} gap-4`}>
+      <div className={`grid grid-cols-1 ${q.cobraImpl && !q.prorrateoActivo ? "sm:grid-cols-2" : ""} gap-4`}>
         <div className="rounded-2xl p-5" style={{ background: C.teal }}>
           <div className="text-xs" style={{ color: "#9fc9bd", letterSpacing: ".05em" }}>
-            {diluirImpl ? "SUSCRIPCIÓN MENSUAL · INCLUYE IMPLEMENTACIÓN" : "SUSCRIPCIÓN MENSUAL"}
+            {q.prorrateoActivo ? "SUSCRIPCIÓN MENSUAL · INCLUYE IMPLEMENTACIÓN" : "SUSCRIPCIÓN MENSUAL"}
           </div>
           <div className="serif mt-1" style={{ fontSize: 36, fontWeight: 700, color: "#fff", lineHeight: 1 }}>
             {money(q.mensualEfectiva)}<span style={{ fontSize: 16, color: "#9fc9bd" }}>/mes</span>
           </div>
           <div className="mono text-xs mt-1.5" style={{ color: "#9fc9bd" }}>
             ≈ {money2(q.mensualEfectiva / Math.max(1, empleados))}/empleado
-            {diluirImpl && " (incl. implementación)"}
+            {q.prorrateoActivo && " (incl. implementación)"}
           </div>
-          {diluirImpl && (
+          {q.prorrateoActivo && (
             <div className="text-xs mt-2 rounded-lg px-2.5 py-1.5 inline-block" style={{ background: "rgba(255,255,255,.1)", color: "#9fc9bd" }}>
               Base: {money(q.mensual)} + Prorrateo: {money2(q.prorrateoPorMes)}/mes × {mesesDilucion}m
             </div>
           )}
         </div>
-        {!diluirImpl && (
+        {q.cobraImpl && !q.prorrateoActivo && (
           <div className="rounded-2xl p-5" style={{ background: "#fff", border: `1.5px solid ${C.orange}` }}>
             <div className="text-xs" style={{ color: C.orange, letterSpacing: ".05em" }}>IMPLEMENTACIÓN · ÚNICO PAGO</div>
             <div className="serif mt-1" style={{ fontSize: 36, fontWeight: 700, color: C.ink, lineHeight: 1 }}>
@@ -105,7 +116,7 @@ export default function CotizacionTab({ q, cfg, empleados, nivel, nivelColor, re
             <span style={{ color: C.sub }}>{l}</span><span className="mono" style={{ fontWeight: 600 }}>{money2(v)}</span>
           </div>
         ))}
-        {diluirImpl && (
+        {q.prorrateoActivo && (
           <div className="flex justify-between py-1.5 text-sm" style={{ borderBottom: `1px solid ${C.paper}` }}>
             <span style={{ color: C.orange }}>+ Prorrateo implementación ({mesesDilucion}m)</span>
             <span className="mono" style={{ fontWeight: 600, color: C.orange }}>{money2(q.prorrateoPorMes)}</span>
@@ -116,7 +127,7 @@ export default function CotizacionTab({ q, cfg, empleados, nivel, nivelColor, re
         </div>
 
         <div className="text-xs mt-4 mb-2" style={{ color: C.sub, fontWeight: 700, letterSpacing: ".04em" }}>
-          {diluirImpl ? "IMPLEMENTACIÓN (PRORRATEADA)" : "IMPLEMENTACIÓN"}
+          {q.prorrateoActivo ? "IMPLEMENTACIÓN (PRORRATEADA)" : "IMPLEMENTACIÓN"}
         </div>
         {[
           [`Base por complejidad (${nivel})`, q.base],
@@ -134,7 +145,7 @@ export default function CotizacionTab({ q, cfg, empleados, nivel, nivelColor, re
         <div className="flex justify-between py-2 text-sm" style={{ fontWeight: 700 }}>
           <span>Total implementación</span><span className="mono" style={{ color: C.orange }}>{money2(q.implementacion)}</span>
         </div>
-        {diluirImpl && (
+        {q.prorrateoActivo && (
           <div className="text-xs mt-1 px-3 py-2 rounded-lg" style={{ background: C.mint, color: C.teal }}>
             Implementación incluida en la mensualidad durante {mesesDilucion} meses. No hay pago único separado.
           </div>
@@ -175,7 +186,7 @@ export default function CotizacionTab({ q, cfg, empleados, nivel, nivelColor, re
               <div className="flex justify-between"><span>KAPI</span><span className="mono" style={{ fontWeight: 700, color: C.teal }}>{money2(q.kapiAnual)}</span></div>
             </div>
           </div>
-          {!diluirImpl && (
+          {q.cobraImpl && !q.prorrateoActivo && (
             <div className="grid grid-cols-2 gap-4 text-sm mt-3 pt-3" style={{ borderTop: "1px solid #fde2c0" }}>
               <div>
                 <div className="text-xs mb-1" style={{ color: C.sub }}>Implementación</div>
