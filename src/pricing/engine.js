@@ -38,7 +38,8 @@ export function calcularCotizacion({ empleados, usuarios, mesesHist, integracion
   const recEntidades = (entidades.length - 1) * (cfg.recargoPorEntidad || 0);
   const implementacion = base + recEscala + recHist + adecMonto + recEntidades;
 
-  const cobraImpl = nivel === "ALTA";
+  const nivelesOrden = ["BAJA", "MEDIA", "ALTA"];
+  const cobraImpl = nivelesOrden.indexOf(nivel) >= nivelesOrden.indexOf(cfg.implNivel || "ALTA");
   const implCobrable = cobraImpl ? implementacion : 0;
   const prorrateoActivo = cobraImpl && diluirImpl;
   const prorrateoPorMes = prorrateoActivo ? implCobrable / Math.max(1, mesesDilucion) : 0;
