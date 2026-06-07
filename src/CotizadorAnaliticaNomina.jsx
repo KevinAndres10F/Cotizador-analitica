@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import {
-  Building2, ClipboardCheck, SlidersHorizontal, Calculator, Workflow, Settings2,
+  Building2, ClipboardCheck, SlidersHorizontal, Calculator, Workflow, Settings2, Users,
 } from "lucide-react";
 import { C } from "./config/colors";
 import { DEFAULTS, PREGUNTAS, CHECKLIST } from "./config/defaults";
@@ -14,6 +14,7 @@ import AlcanceTab from "./components/tabs/AlcanceTab";
 import CotizacionTab from "./components/tabs/CotizacionTab";
 import ProcesoTab from "./components/tabs/ProcesoTab";
 import TarifasTab from "./components/tabs/TarifasTab";
+import LeadsTab from "./components/tabs/LeadsTab";
 import { exportCSV, exportExcel } from "./export/exportQuote";
 
 export default function CotizadorAnaliticaNomina() {
@@ -96,6 +97,7 @@ export default function CotizadorAnaliticaNomina() {
     ["alcance", "Alcance", SlidersHorizontal],
     ["cotizacion", "Cotización", Calculator],
     ["proceso", "Proceso", Workflow],
+    ["leads", "Leads", Users],
     ["tarifas", "Tarifas", Settings2],
   ];
 
@@ -128,17 +130,17 @@ export default function CotizadorAnaliticaNomina() {
       {/* Tabs */}
       <div className="no-print" style={{ background: "#fff", borderBottom: `1px solid ${C.line}`, position: "sticky", top: 0, zIndex: 20 }}>
         <div className="max-w-6xl mx-auto px-4 flex items-center gap-1 overflow-x-auto">
-          {TABS.filter(([id]) => !(id === "tarifas" && vista === "cliente")).map(([id, label, Icon]) => {
+          {TABS.filter(([id]) => !((id === "tarifas" || id === "leads") && vista === "cliente")).map(([id, label, Icon]) => {
             const active = tab === id;
-            const isCfg = id === "tarifas";
+            const isInternal = id === "tarifas" || id === "leads";
             return (
               <button key={id} onClick={() => setTab(id)}
                 className="tabbtn flex items-center gap-2 px-4 py-3.5 text-sm whitespace-nowrap"
                 style={{
-                  color: active ? (isCfg ? C.orange : C.teal) : C.sub,
+                  color: active ? (isInternal ? C.orange : C.teal) : C.sub,
                   fontWeight: active ? 700 : 500,
-                  borderBottom: `2.5px solid ${active ? (isCfg ? C.orange : C.teal) : "transparent"}`,
-                  opacity: isCfg && !active ? 0.7 : 1,
+                  borderBottom: `2.5px solid ${active ? (isInternal ? C.orange : C.teal) : "transparent"}`,
+                  opacity: isInternal && !active ? 0.7 : 1,
                 }}>
                 <Icon size={16} /> {label}
               </button>
@@ -149,8 +151,8 @@ export default function CotizadorAnaliticaNomina() {
 
       {/* Layout */}
       <div className="max-w-6xl mx-auto px-6 py-7">
-        <div className={tab === "proceso" || tab === "tarifas" ? "" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}>
-          <div className={tab === "proceso" || tab === "tarifas" ? "" : "lg:col-span-2 space-y-6"}>
+        <div className={tab === "proceso" || tab === "tarifas" || tab === "leads" ? "" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}>
+          <div className={tab === "proceso" || tab === "tarifas" || tab === "leads" ? "" : "lg:col-span-2 space-y-6"}>
             {tab === "cliente" && (
               <ClienteTab
                 cliente={cliente} setCliente={setCliente}
@@ -189,12 +191,15 @@ export default function CotizadorAnaliticaNomina() {
             {tab === "proceso" && (
               <ProcesoTab check={check} setCheck={setCheck} />
             )}
+            {tab === "leads" && (
+              <LeadsTab />
+            )}
             {tab === "tarifas" && (
               <TarifasTab cfg={cfg} setCfg={setCfg} />
             )}
           </div>
 
-          {tab !== "proceso" && tab !== "tarifas" && (
+          {tab !== "proceso" && tab !== "tarifas" && tab !== "leads" && (
             <SummaryRail
               cliente={cliente} empleados={empleados} usuarios={usuarios}
               nivel={nivel} nivelColor={nivelColor} q={q}
