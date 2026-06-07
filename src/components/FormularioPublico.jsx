@@ -398,8 +398,6 @@ export default function FormularioPublico() {
 
   /* ── step 2: confirmation ── */
   if (step === 2 && resultado) {
-    const { nivel, cotizacion } = resultado;
-    const nc = nivelColor[nivel];
     return (
       <div style={{ background: C.paper, minHeight: "100vh" }}>
         <style>{FONT_CSS}</style>
@@ -414,68 +412,42 @@ export default function FormularioPublico() {
             <h1 className="serif" style={{ fontSize: 28, fontWeight: 700, color: C.teal }}>
               ¡Gracias, {contacto.contacto.split(" ")[0]}!
             </h1>
-            <p className="mt-2 text-sm" style={{ color: C.sub }}>
-              Hemos procesado tu diagnóstico. Aquí tienes tu pre-cotización estimada.
+            <p className="mt-2 text-sm" style={{ color: C.sub, maxWidth: 420, margin: "8px auto 0" }}>
+              Hemos recibido tu información y diagnóstico. Un asesor de KAPI Service Group se pondrá en contacto contigo pronto con una propuesta personalizada.
             </p>
           </div>
 
-          {/* Pre-quote card */}
           <div className="rounded-2xl p-6 mb-5" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
-            <h2 className="serif mb-4" style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>
-              Tu pre-cotización estimada
+            <h2 className="serif mb-3" style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>
+              ¿Qué sigue?
             </h2>
-
-            {/* Complexity badge */}
-            <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-5" style={{ background: nc.bg }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: nc.text }} />
-              <span className="text-sm font-semibold" style={{ color: nc.text }}>{nc.label}</span>
-            </div>
-
-            {/* Fee lines */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between py-3 rounded-xl px-4" style={{ background: C.paper }}>
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: C.ink }}>Cuota mensual de plataforma</p>
-                  <p className="text-xs mt-0.5" style={{ color: C.sub }}>
-                    Incluye {DEFAULTS.usuariosIncluidos} usuarios · soporte mensual
-                  </p>
-                </div>
-                <span className="serif text-xl font-bold" style={{ color: C.teal }}>
-                  {money(cotizacion.mensual)}<span className="text-sm font-normal">/mes</span>
-                </span>
-              </div>
-
-              {cotizacion.implCobrable > 0 && (
-                <div className="flex items-center justify-between py-3 rounded-xl px-4" style={{ background: C.paper }}>
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: C.ink }}>Implementación estimada</p>
-                    <p className="text-xs mt-0.5" style={{ color: C.sub }}>Pago único · incluye integración y puesta en marcha</p>
+              {[
+                ["1", "Revisamos tu diagnóstico", "Nuestro equipo analiza las respuestas para dimensionar tu proyecto."],
+                ["2", "Te contactamos", "Un asesor te presentará una propuesta detallada y personalizada."],
+                ["3", "Arrancamos juntos", "Definimos el plan de implementación y comenzamos a trabajar."],
+              ].map(([n, title, desc]) => (
+                <div key={n} className="flex items-start gap-3">
+                  <div className="rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ width: 28, height: 28, background: C.mint, color: C.teal, fontSize: 13, fontWeight: 700 }}>
+                    {n}
                   </div>
-                  <span className="serif text-xl font-bold" style={{ color: C.ink }}>
-                    {money(cotizacion.implCobrable)}
-                  </span>
+                  <div>
+                    <p className="text-sm" style={{ fontWeight: 600, color: C.ink }}>{title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: C.sub }}>{desc}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-
-            <div className="mt-5 rounded-xl p-4" style={{ background: C.mint, border: `1px solid ${C.line}` }}>
-              <p className="text-sm" style={{ color: C.teal, fontWeight: 600 }}>
-                Esta es una estimación preliminar
-              </p>
-              <p className="text-xs mt-1" style={{ color: C.sub, lineHeight: 1.6 }}>
-                Los valores finales se ajustan al alcance exacto de tu proyecto. Un asesor de KAPI Service Group se
-                pondrá en contacto contigo a la brevedad para presentarte una propuesta detallada y personalizada.
-              </p>
+              ))}
             </div>
           </div>
 
           <div className="rounded-2xl p-5 text-center" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
             <p className="text-sm font-semibold" style={{ color: C.ink }}>¿Deseas agilizar el proceso?</p>
             <p className="text-xs mt-1 mb-3" style={{ color: C.sub }}>
-              Escríbenos directamente y te enviamos la propuesta completa.
+              Escríbenos directamente y te atendemos de inmediato.
             </p>
             <a
-              href="mailto:hola@kapiservicegroup.com"
+              href="mailto:info@kapisg.com"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition"
               style={{ background: C.teal, color: "#fff" }}
             >
