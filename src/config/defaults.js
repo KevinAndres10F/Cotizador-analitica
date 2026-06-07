@@ -7,11 +7,7 @@ export const DEFAULTS = {
   basePlataforma: 90,
   pisoMensual: 350,
   brackets: [
-    { hasta: 100, tarifa: 3.5 },
-    { hasta: 500, tarifa: 2.8 },
-    { hasta: 1500, tarifa: 2.2 },
-    { hasta: 5000, tarifa: 1.6 },
-    { hasta: Infinity, tarifa: 1.1 },
+    { hasta: Infinity, tarifa: 2.5 },
   ],
   usuariosIncluidos: 3,
   precioUsuarioAdicional: 20,
