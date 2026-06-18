@@ -14,8 +14,8 @@ body {
 }
 
 ::selection {
-  background: #22c55e;
-  color: #0a3a35;
+  background: #6390c6;
+  color: #fff;
 }
 
 ::-webkit-scrollbar {
@@ -26,9 +26,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c2d2cb;
+  background: #c3ccd6;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #5b6b67;
+  background: #67696f;
 }

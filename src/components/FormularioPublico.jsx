@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Gauge, Send, CheckCircle2, Loader2, Building2, Users, Database,
+  Send, CheckCircle2, Loader2, Building2, Users, Database,
   Layers, CalendarClock, Target, MessageSquare, Mail, Phone, Briefcase,
 } from "lucide-react";
 import { C } from "../config/colors";
@@ -41,19 +41,34 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /* ─── sub-componentes ─────────────────────────────────────────────── */
 
+/* Ícono "M" de ManpowerGroup: 4 barras inclinadas con los colores oficiales
+   (azul / azul claro / verde salvia / naranja). SVG nativo y escalable. */
+function ManpowerMark({ size = 28 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
+      <g transform="skewX(-12) translate(20 0)">
+        <rect x="0"  y="56" width="15" height="38" rx="7.5" fill="#466ea5" />
+        <rect x="21" y="44" width="15" height="50" rx="7.5" fill="#6390c6" />
+        <rect x="42" y="30" width="15" height="64" rx="7.5" fill="#6e8f82" />
+        <rect x="63" y="14" width="15" height="80" rx="7.5" fill="#e77c22" />
+      </g>
+    </svg>
+  );
+}
+
 function BrandHeader() {
   return (
     <div style={{ background: C.teal }}>
       <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-3">
-        <div className="rounded-xl flex items-center justify-center" style={{ width: 42, height: 42, background: C.green }}>
-          <Gauge size={22} color={C.teal} strokeWidth={2.4} />
+        <div className="rounded-xl flex items-center justify-center" style={{ width: 44, height: 44, background: "#fff" }}>
+          <ManpowerMark size={28} />
         </div>
         <div>
           <div className="serif" style={{ color: "#fff", fontSize: 21, fontWeight: 600, lineHeight: 1.1 }}>
-            Analítica de Nómina
+            Manpower
           </div>
-          <div style={{ color: "#9fc9bd", fontSize: 12.5, letterSpacing: ".04em" }}>
-            KAPI SERVICE GROUP × MANPOWER
+          <div style={{ color: "#c3d4ea", fontSize: 12.5, letterSpacing: ".04em" }}>
+            ANALÍTICA DE NÓMINA · POWERED BY KAPI SERVICE GROUP
           </div>
         </div>
       </div>
@@ -182,8 +197,9 @@ export default function FormularioPublico() {
               ¡Gracias{form.nombre ? `, ${form.nombre.split(" ")[0]}` : ""}!
             </h1>
             <p className="mt-3 text-sm" style={{ color: C.sub, maxWidth: 440, margin: "12px auto 0", lineHeight: 1.6 }}>
-              Recibimos tu información. Nuestro equipo de KAPI Service Group revisará lo que nos
-              compartiste y te contactará pronto para conversar sobre tu tablero de analítica de nómina.
+              Recibimos tu información. Nuestro equipo de Manpower (powered by Kapi Service Group)
+              revisará lo que nos compartiste y te contactará pronto para conversar sobre tu tablero
+              de analítica de nómina.
             </p>
           </div>
 
@@ -210,7 +226,7 @@ export default function FormularioPublico() {
           </div>
 
           <p className="text-center text-xs mt-8" style={{ color: C.sub }}>
-            KAPI Service Group · Quito, Ecuador — Tu información es confidencial
+            Manpower · Powered by Kapi Service Group — Tu información es confidencial
           </p>
         </div>
       </div>
@@ -335,7 +351,7 @@ export default function FormularioPublico() {
           type="submit"
           disabled={enviando}
           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm transition"
-          style={{ background: C.teal, color: "#fff", fontWeight: 700, opacity: enviando ? 0.7 : 1 }}
+          style={{ background: C.orange, color: "#fff", fontWeight: 700, opacity: enviando ? 0.7 : 1 }}
         >
           {enviando
             ? <><Loader2 size={18} className="animate-spin" /> Enviando...</>
@@ -344,7 +360,7 @@ export default function FormularioPublico() {
         </button>
 
         <p className="text-center text-xs mt-6" style={{ color: C.sub }}>
-          KAPI Service Group · Quito, Ecuador — Tu información es confidencial
+          Manpower · Powered by Kapi Service Group — Tu información es confidencial
         </p>
       </form>
     </div>
