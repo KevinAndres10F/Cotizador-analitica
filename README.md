@@ -1,86 +1,62 @@
-# KAPI · Cotizador — Analítica de Nómina
+# KAPI · Formulario público — Analítica de Nómina
 
-Aplicación React + Vite con **dos experiencias separadas**:
+Este repositorio contiene **únicamente el formulario público de captación de leads**
+(React + Vite). Es lo que ven los clientes: corto, amigable y **sin precios,
+complejidad ni puntajes**.
 
-| Superficie | Ruta | Para quién | Qué muestra |
-|---|---|---|---|
-| **Cotizador interno** | `/` (raíz) | Proveedores (KAPI / Manpower) | Diagnóstico con puntajes, complejidad, tarifas, split y cotización. Pestaña **Leads**. |
-| **Formulario público** | `/#formulario` · `/diagnostico-cliente` · `/contacto` | Clientes | Formulario corto y amigable. **No** muestra precios, complejidad ni puntajes. |
+El **cotizador interno** (diagnóstico con puntajes, tarifas, split y cotización)
+vive en un repositorio aparte — `Leads-Cotizador-Nomina` — conectado a la
+**misma base de datos Supabase**.
 
-El formulario público guarda los datos en la tabla `leads` de Supabase. La pestaña interna
-**Leads** los lee (requiere iniciar sesión).
+| Repositorio | Contenido | URL típica |
+|---|---|---|
+| **este** (`cotizador-analitica`) | Formulario público | `https://cotizador-analitica-kapi.netlify.app/` |
+| `Leads-Cotizador-Nomina` | Cotizador interno + pestaña Leads (con login) | sitio Netlify aparte, protegido |
+
+Ambos escriben/leen la tabla `leads` del mismo proyecto Supabase.
 
 ---
 
-## 1. Requisitos
+## Variables de entorno
 
-- Node 18+
-- Una cuenta/proyecto de [Supabase](https://supabase.com)
-
-## 2. Variables de entorno
-
-Crea un archivo `.env` en la raíz (puedes copiar `.env.example`):
-
-```bash
-cp .env.example .env
-```
+Copia `.env.example` a `.env` y completa:
 
 ```env
 VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
 VITE_SUPABASE_ANON_KEY=tu-anon-key-publica
 ```
 
-Los valores están en **Supabase > Project Settings > API** (`Project URL` y `anon public`).
-La anon key es pública por diseño (viaja en el bundle); la seguridad la da RLS.
+En Netlify: **Site settings > Environment variables**. La anon key es pública por
+diseño; la seguridad la da RLS (el formulario **solo puede INSERTAR** leads).
 
-> ⚠️ `.env` está en `.gitignore` y **no** se sube al repositorio. Nunca pongas claves
-> reales en el código fuente.
+## Base de datos
 
-## 3. Base de datos (Supabase)
+El esquema de la tabla `leads` + las políticas RLS están en
+[`docs/supabase-leads.sql`](docs/supabase-leads.sql). Es el mismo proyecto que usa
+el cotizador interno.
 
-Ejecuta el script [`docs/supabase-leads.sql`](docs/supabase-leads.sql) en
-**Supabase > SQL Editor**. Crea:
-
-- La tabla `leads` con **RLS**:
-  - `INSERT` permitido al público (anon) → el formulario puede guardar.
-  - `SELECT / UPDATE / DELETE` solo para usuarios **autenticados** → el público no puede leer.
-- La tabla interna `cot_cotizaciones` (para el botón Guardar/Cargar del cotizador).
-
-## 4. Usuario interno para ver los leads
-
-La pestaña **Leads** usa Supabase Auth. Crea un usuario:
-
-**Supabase > Authentication > Users > Add user** → email + contraseña
-(marca *Auto Confirm User*).
-
-Ese correo/contraseña es el que usan los proveedores para entrar a la pestaña Leads.
-
-## 5. Desarrollo local
+## Desarrollo
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:5173  → muestra el formulario
 npm run build    # genera dist/
 ```
 
-- Cotizador interno: `http://localhost:5173/`
-- Formulario público: `http://localhost:5173/#formulario`
+## Despliegue (Netlify)
 
-## 6. Despliegue en Netlify
-
-1. Conecta el repo. Build command `npm run build`, publish `dist` (ya están en `netlify.toml`).
-2. En **Site settings > Environment variables** agrega:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-3. Vuelve a desplegar (*Trigger deploy*) para que tome las variables.
-
-> Si no defines las variables, el formulario no podrá conectarse a Supabase
-> (verás un error en consola). Configúralas antes del primer deploy productivo.
+- Build command `npm run build`, publish `dist` (ver `netlify.toml`).
+- Define `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+- El formulario se sirve en la **raíz** (`/`).
 
 ---
 
-## Notas de seguridad
+## Cómo se creó el repo interno (`Leads-Cotizador-Nomina`)
 
-- El formulario público **solo inserta** leads; no puede leerlos (RLS).
-- Ninguna lógica de precios/complejidad/puntajes vive en el frontend público.
-- Para ver/editar leads hay que iniciar sesión (rol `authenticated`).
+1. Se duplicó este repo (cuando aún tenía el cotizador completo) en
+   `Leads-Cotizador-Nomina`.
+2. En ese repo se quitó el formulario público y se dejó solo el cotizador.
+3. Se conectó a un sitio Netlify aparte, **protegido** (contraseña de Netlify o
+   login Supabase Auth), con las mismas variables de entorno.
+
+Ver `docs/migracion-dos-repos.md` para el detalle.
