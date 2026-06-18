@@ -31,9 +31,8 @@ const OPCIONES_FORMATO = ["Sistema o plataforma", "Archivos Excel / CSV", "No es
 const OPCIONES_FRECUENCIA = ["Cada mes", "Cada quincena", "Cada semana", "No estoy seguro"];
 
 const FONT_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
-  * { font-family: 'Hanken Grotesk', sans-serif; -webkit-font-smoothing: antialiased; }
-  .serif { font-family: 'Fraunces', serif; }
+  * { font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+  .serif { font-family: Arial, Helvetica, sans-serif; }
 `;
 
 const inputStyle = { border: `1px solid ${C.line}`, background: "#fff" };
