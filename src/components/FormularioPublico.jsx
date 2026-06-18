@@ -41,21 +41,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /* ─── sub-componentes ─────────────────────────────────────────────── */
 
-/* Ícono "M" de ManpowerGroup: 4 barras inclinadas con los colores oficiales
-   (azul / azul claro / verde salvia / naranja). SVG nativo y escalable. */
-function ManpowerMark({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
-      <g transform="skewX(-12) translate(20 0)">
-        <rect x="0"  y="56" width="15" height="38" rx="7.5" fill="#466ea5" />
-        <rect x="21" y="44" width="15" height="50" rx="7.5" fill="#6390c6" />
-        <rect x="42" y="30" width="15" height="64" rx="7.5" fill="#6e8f82" />
-        <rect x="63" y="14" width="15" height="80" rx="7.5" fill="#e77c22" />
-      </g>
-    </svg>
-  );
-}
-
 function BrandHeader() {
   return (
     <div style={{ background: C.teal }}>
