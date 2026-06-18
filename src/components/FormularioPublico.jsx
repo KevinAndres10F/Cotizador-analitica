@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 import {
-  Gauge, Send, CheckCircle2, Loader2, ChevronRight, ChevronLeft,
-  Database, Layers, Building2, Lock, Sparkles, FileText,
-  BellRing, ShieldCheck, Users,
+  Gauge, Send, CheckCircle2, Loader2, Building2, Users, Database,
+  Layers, CalendarClock, Target, MessageSquare, Mail, Phone, Briefcase,
 } from "lucide-react";
 import { C } from "../config/colors";
 import { supabase } from "../lib/supabase";
-import { DEFAULTS } from "../config/defaults";
-import { calcularCotizacion, money } from "../pricing/engine";
 
-/* ─── constants ─────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────
+   Formulario PÚBLICO de captación de leads.
+
+   ⚠️ Por diseño NO contiene NADA de precio, complejidad, puntajes ni
+   lógica de cálculo. Solo recoge datos de contacto y respuestas en
+   lenguaje natural y las inserta en la tabla `leads` de Supabase.
+   El mapeo a complejidad/cotización ocurre del lado interno/servidor.
+   ───────────────────────────────────────────────────────────────────── */
 
 const SECTORES = [
   "Manufactura", "Retail / Comercio", "Servicios financieros", "Tecnología",
@@ -17,116 +21,14 @@ const SECTORES = [
   "Agroindustria", "Gobierno / ONG", "Otro",
 ];
 
-const RANGOS_EMPLEADOS = [
-  "1 – 50", "51 – 200", "201 – 500", "501 – 1,000", "1,001 – 5,000", "5,000+",
+/* Preguntas amigables — las opciones son TEXTO (sin puntajes). */
+const OPCIONES_EMPRESAS = ["Una sola empresa", "Entre 2 y 5", "6 o más", "No estoy seguro"];
+const OPCIONES_EMPLEADOS = [
+  "Menos de 50", "Entre 50 y 200", "Entre 200 y 500",
+  "Entre 500 y 1.000", "Más de 1.000", "No estoy seguro",
 ];
-
-const EMPLEADOS_APROX = {
-  "1 – 50": 25,
-  "51 – 200": 125,
-  "201 – 500": 350,
-  "501 – 1,000": 750,
-  "1,001 – 5,000": 3000,
-  "5,000+": 7500,
-};
-
-/* Client-friendly diagnostic questions (same ids/scores as PREGUNTAS) */
-const DIAGNOSTICO = [
-  {
-    id: "fuentes", icon: Database,
-    q: "¿Cuántos sistemas de nómina manejan actualmente?",
-    opciones: [
-      { label: "Solo uno", score: 0 },
-      { label: "Entre 2 y 3", score: 2 },
-      { label: "4 o más", score: 4 },
-    ],
-  },
-  {
-    id: "formato", icon: Layers,
-    q: "¿En qué formato están disponibles los datos de nómina?",
-    opciones: [
-      { label: "Base de datos o API estructurada", score: 0 },
-      { label: "Archivos Excel o CSV organizados", score: 2 },
-      { label: "PDFs, reportes impresos o formatos variados", score: 4 },
-    ],
-  },
-  {
-    id: "entidades", icon: Building2,
-    q: "¿Cuántas empresas o razones sociales tienen?",
-    opciones: [
-      { label: "Una sola empresa", score: 0 },
-      { label: "De 2 a 5 entidades", score: 2 },
-      { label: "6 o más entidades", score: 3 },
-    ],
-  },
-  {
-    id: "actualizacion", icon: Gauge,
-    q: "¿Con qué frecuencia necesitan actualizar los datos del tablero?",
-    opciones: [
-      { label: "Una vez al mes, manualmente", score: 0 },
-      { label: "Automático periódico (semanal / quincenal)", score: 1 },
-      { label: "En tiempo real o conexión continua", score: 3 },
-    ],
-  },
-  {
-    id: "anonimizacion", icon: Lock,
-    q: "¿Qué nivel de privacidad y cumplimiento necesitan para los datos?",
-    opciones: [
-      { label: "Uso interno básico, sin restricciones especiales", score: 0 },
-      { label: "Datos protegidos por rol y pseudonimizados", score: 2 },
-      { label: "Cumplimiento estricto LOPDP / auditoría avanzada", score: 4 },
-    ],
-  },
-  {
-    id: "personalizacion", icon: Sparkles,
-    q: "¿Cuántos tableros o vistas personalizadas esperan tener?",
-    opciones: [
-      { label: "Un tablero estándar", score: 0 },
-      { label: "Entre 2 y 3 tableros", score: 2 },
-      { label: "4 tableros o más", score: 4 },
-    ],
-  },
-  {
-    id: "historico", icon: FileText,
-    q: "¿Cuántos meses de historial de nómina desean cargar?",
-    opciones: [
-      { label: "Hasta 12 meses", score: 0 },
-      { label: "Entre 13 y 36 meses", score: 2 },
-      { label: "Más de 36 meses", score: 3 },
-    ],
-  },
-  {
-    id: "salidas", icon: BellRing,
-    q: "¿Cómo prefieren recibir alertas e informes?",
-    opciones: [
-      { label: "Solo en el tablero web", score: 0 },
-      { label: "Tablero + notificaciones por correo", score: 1 },
-      { label: "Tablero + correo + WhatsApp u otras apps", score: 3 },
-    ],
-  },
-  {
-    id: "seguridad", icon: ShieldCheck,
-    q: "¿Qué tipo de acceso y seguridad requieren?",
-    opciones: [
-      { label: "Acceso estándar con usuario y contraseña", score: 0 },
-      { label: "Inicio de sesión único (SSO) o bitácora de auditoría", score: 2 },
-      { label: "Requisitos de seguridad específicos o instalación local", score: 4 },
-    ],
-  },
-  {
-    id: "capacitacion", icon: Users,
-    q: "¿Cuánta capacitación y acompañamiento necesitan?",
-    opciones: [
-      { label: "Entrega básica y guía de uso", score: 0 },
-      { label: "Capacitación a un equipo de trabajo", score: 1 },
-      { label: "Capacitación en múltiples sedes o equipos", score: 3 },
-    ],
-  },
-];
-
-const HISTORICO_MESES = { 0: 6, 2: 24, 3: 48 };
-
-/* ─── helpers ───────────────────────────────────────────────────── */
+const OPCIONES_FORMATO = ["Sistema o plataforma", "Archivos Excel / CSV", "No estoy seguro"];
+const OPCIONES_FRECUENCIA = ["Cada mes", "Cada quincena", "Cada semana", "No estoy seguro"];
 
 const FONT_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap');
@@ -134,251 +36,13 @@ const FONT_CSS = `
   .serif { font-family: 'Fraunces', serif; }
 `;
 
-function calcularDiagnostico(respuestas, empleados_rango) {
-  const score = Object.values(respuestas).reduce((s, v) => s + (v ?? 0), 0);
-  const nivel =
-    score >= DEFAULTS.umbralAlta ? "ALTA" : score >= DEFAULTS.umbralMedia ? "MEDIA" : "BAJA";
-  const empleados = EMPLEADOS_APROX[empleados_rango] ?? 25;
-
-  // derive mesesHist from historico score
-  const histScore = respuestas.historico ?? 0;
-  const mesesHist = HISTORICO_MESES[histScore] ?? 6;
-
-  // derive integraciones from fuentes score
-  const fuentesScore = respuestas.fuentes ?? 0;
-  const integraciones = fuentesScore === 0 ? 1 : fuentesScore === 2 ? 2 : 4;
-
-  // derive entidades count from entidades score
-  const entScore = respuestas.entidades ?? 0;
-  const entidadesCount = entScore === 0 ? 1 : entScore === 2 ? 3 : 6;
-
-  const cotizacion = calcularCotizacion({
-    empleados,
-    usuarios: DEFAULTS.usuariosIncluidos,
-    mesesHist,
-    integraciones,
-    kpis: 0,
-    reportes: 0,
-    nivel,
-    cfg: DEFAULTS,
-    entidades: Array.from({ length: entidadesCount }, (_, i) => i),
-    diluirImpl: false,
-    mesesDilucion: 12,
-  });
-
-  return { score, nivel, cotizacion };
-}
-
-const nivelColor = {
-  BAJA: { bg: C.mint, text: C.teal, label: "Complejidad Baja" },
-  MEDIA: { bg: "#fef9ec", text: "#92620a", label: "Complejidad Media" },
-  ALTA: { bg: "#fef2f2", text: "#b91c1c", label: "Complejidad Alta" },
-};
-
-/* ─── sub-components ────────────────────────────────────────────── */
-
-function ProgressBar({ step }) {
-  const steps = ["Contacto", "Diagnóstico", "Tu pre-cotización"];
-  return (
-    <div className="flex items-center gap-0 mb-8">
-      {steps.map((label, i) => {
-        const active = i === step;
-        const done = i < step;
-        return (
-          <React.Fragment key={i}>
-            <div className="flex flex-col items-center" style={{ minWidth: 80 }}>
-              <div
-                className="rounded-full flex items-center justify-center text-xs font-bold"
-                style={{
-                  width: 32, height: 32,
-                  background: done ? C.green : active ? C.teal : C.line,
-                  color: done || active ? "#fff" : C.sub,
-                  transition: "all .25s",
-                }}
-              >
-                {done ? <CheckCircle2 size={16} /> : i + 1}
-              </div>
-              <span
-                className="mt-1 text-center"
-                style={{ fontSize: 11, color: active ? C.ink : C.sub, fontWeight: active ? 600 : 400, lineHeight: 1.2 }}
-              >
-                {label}
-              </span>
-            </div>
-            {i < steps.length - 1 && (
-              <div style={{ flex: 1, height: 2, background: done ? C.green : C.line, margin: "0 4px", marginBottom: 20, transition: "background .25s" }} />
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-}
-
-function Field({ label, required, children }) {
-  return (
-    <div>
-      <label className="block text-xs mb-1" style={{ color: C.sub, fontWeight: 600 }}>
-        {label}{required && " *"}
-      </label>
-      {children}
-    </div>
-  );
-}
-
 const inputStyle = { border: `1px solid ${C.line}`, background: "#fff" };
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function Input({ value, onChange, placeholder, type = "text" }) {
+/* ─── sub-componentes ─────────────────────────────────────────────── */
+
+function BrandHeader() {
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-      style={inputStyle}
-    />
-  );
-}
-
-function RadioGroup({ question, value, onChange }) {
-  const Icon = question.icon;
-  return (
-    <div className="rounded-2xl p-5" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
-      <div className="flex items-start gap-3 mb-3">
-        <div
-          className="rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ width: 34, height: 34, background: C.mint }}
-        >
-          <Icon size={17} color={C.teal} />
-        </div>
-        <p className="text-sm font-medium leading-snug" style={{ color: C.ink, paddingTop: 7 }}>
-          {question.q}
-        </p>
-      </div>
-      <div className="space-y-2 pl-1">
-        {question.opciones.map((op) => {
-          const selected = value === op.score;
-          return (
-            <label
-              key={op.score}
-              className="flex items-center gap-3 cursor-pointer rounded-xl px-3 py-2.5 transition-colors"
-              style={{
-                background: selected ? C.mint : "transparent",
-                border: `1px solid ${selected ? C.teal : C.line}`,
-              }}
-            >
-              <div
-                className="rounded-full flex-shrink-0 flex items-center justify-center"
-                style={{
-                  width: 18, height: 18,
-                  border: `2px solid ${selected ? C.teal : C.sub}`,
-                  background: selected ? C.teal : "#fff",
-                }}
-              >
-                {selected && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#fff" }} />}
-              </div>
-              <span className="text-sm" style={{ color: selected ? C.teal : C.ink, fontWeight: selected ? 600 : 400 }}>
-                {op.label}
-              </span>
-              <input
-                type="radio"
-                name={question.id}
-                value={op.score}
-                checked={selected}
-                onChange={() => onChange(op.score)}
-                className="sr-only"
-              />
-            </label>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ─── main component ────────────────────────────────────────────── */
-
-export default function FormularioPublico() {
-  const [step, setStep] = useState(0);
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState("");
-  const [resultado, setResultado] = useState(null); // { score, nivel, cotizacion }
-
-  const [contacto, setContacto] = useState({
-    empresa: "", contacto: "", email: "", telefono: "",
-    sector: "", empleados_rango: "", mensaje: "",
-  });
-
-  const [respuestas, setRespuestas] = useState({});
-
-  const setC = (k, v) => setContacto((f) => ({ ...f, [k]: v }));
-  const setR = (id, score) => setRespuestas((r) => ({ ...r, [id]: score }));
-
-  /* ── step 0 validation ── */
-  const validarContacto = () => {
-    if (!contacto.empresa || !contacto.contacto || !contacto.email) {
-      setError("Por favor completa empresa, nombre de contacto y correo electrónico.");
-      return false;
-    }
-    setError("");
-    return true;
-  };
-
-  /* ── step 1 validation ── */
-  const validarDiagnostico = () => {
-    const respondidas = DIAGNOSTICO.filter((q) => respuestas[q.id] !== undefined).length;
-    if (respondidas < DIAGNOSTICO.length) {
-      setError(`Por favor responde todas las preguntas. (${DIAGNOSTICO.length - respondidas} pendiente${DIAGNOSTICO.length - respondidas > 1 ? "s" : ""})`);
-      return false;
-    }
-    setError("");
-    return true;
-  };
-
-  /* ── final submit ── */
-  const handleSubmit = async () => {
-    setError("");
-    setEnviando(true);
-    try {
-      const { score, nivel, cotizacion } = calcularDiagnostico(respuestas, contacto.empleados_rango);
-
-      const payload = {
-        empresa: contacto.empresa,
-        contacto: contacto.contacto,
-        email: contacto.email,
-        telefono: contacto.telefono,
-        sector: contacto.sector,
-        empleados_rango: contacto.empleados_rango,
-        mensaje: contacto.mensaje,
-        diagnostico: { respuestas, score, nivel },
-        pre_cotizacion: {
-          mensual: cotizacion.mensual,
-          implementacion: cotizacion.implCobrable,
-          nivel,
-        },
-        status: "nuevo",
-      };
-
-      const { error: dbErr } = await supabase.from("cot_leads").insert(payload);
-      if (dbErr) throw dbErr;
-
-      try {
-        await supabase.functions.invoke("notify-lead", { body: payload });
-      } catch (_) {}
-
-      setResultado({ score, nivel, cotizacion });
-      setStep(2);
-    } catch (err) {
-      setError("Ocurrió un error al enviar. Por favor intenta de nuevo.");
-      console.error(err);
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  /* ── header ── */
-  const Header = () => (
     <div style={{ background: C.teal }}>
       <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-3">
         <div className="rounded-xl flex items-center justify-center" style={{ width: 42, height: 42, background: C.green }}>
@@ -395,42 +59,146 @@ export default function FormularioPublico() {
       </div>
     </div>
   );
+}
 
-  /* ── step 2: confirmation ── */
-  if (step === 2 && resultado) {
+function Field({ label, required, icon: Icon, children }) {
+  return (
+    <div>
+      <label className="flex items-center gap-1.5 text-xs mb-1.5" style={{ color: C.sub, fontWeight: 600 }}>
+        {Icon && <Icon size={13} />}
+        {label}{required && <span style={{ color: C.green2 }}> *</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function TextInput({ value, onChange, placeholder, type = "text" }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+      style={inputStyle}
+    />
+  );
+}
+
+function Select({ value, onChange, placeholder, options }) {
+  return (
+    <select
+      value={value}
+      onChange={onChange}
+      className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+      style={{ ...inputStyle, color: value ? C.ink : C.sub }}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((o) => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+}
+
+/* ─── componente principal ────────────────────────────────────────── */
+
+export default function FormularioPublico() {
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+  const [error, setError] = useState("");
+
+  const [form, setForm] = useState({
+    nombre: "", empresa: "", correo: "", telefono: "", sector: "",
+    num_empresas: "", num_empleados: "", formato_datos: "", frecuencia: "",
+    objetivos: "", notas: "",
+    website: "", // honeypot anti-spam (debe quedar vacío)
+  });
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const validar = () => {
+    if (!form.nombre.trim() || !form.empresa.trim() || !form.correo.trim() || !form.telefono.trim()) {
+      setError("Por favor completa tu nombre, empresa, correo y teléfono.");
+      return false;
+    }
+    if (!EMAIL_RE.test(form.correo.trim())) {
+      setError("El correo no parece válido. Revísalo, por favor.");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validar()) return;
+
+    // Honeypot: si está lleno, es bot → fingimos éxito sin insertar.
+    if (form.website) { setEnviado(true); return; }
+
+    setEnviando(true);
+    setError("");
+    try {
+      const payload = {
+        nombre: form.nombre.trim(),
+        empresa: form.empresa.trim(),
+        correo: form.correo.trim(),
+        telefono: form.telefono.trim(),
+        sector: form.sector || null,
+        num_empresas: form.num_empresas || null,
+        num_empleados: form.num_empleados || null,
+        formato_datos: form.formato_datos || null,
+        frecuencia: form.frecuencia || null,
+        objetivos: form.objetivos.trim() || null,
+        notas: form.notas.trim() || null,
+        // `estado` lo asigna la base de datos con default 'nuevo'.
+      };
+
+      // Solo INSERT (sin .select(): RLS impide leer de vuelta desde el público).
+      const { error: dbErr } = await supabase.from("leads").insert(payload);
+      if (dbErr) throw dbErr;
+
+      setEnviado(true);
+    } catch (err) {
+      console.error("Error al enviar el formulario:", err);
+      setError("Ocurrió un error al enviar. Por favor intenta de nuevo en un momento.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  /* ── pantalla de confirmación ── */
+  if (enviado) {
     return (
       <div style={{ background: C.paper, minHeight: "100vh" }}>
         <style>{FONT_CSS}</style>
-        <Header />
-        <div className="max-w-2xl mx-auto px-6 py-10">
-          <ProgressBar step={2} />
-
+        <BrandHeader />
+        <div className="max-w-2xl mx-auto px-6 py-12">
           <div className="text-center mb-8">
-            <div className="mx-auto mb-4 rounded-full flex items-center justify-center" style={{ width: 64, height: 64, background: C.mint }}>
-              <CheckCircle2 size={32} color={C.teal} />
+            <div className="mx-auto mb-4 rounded-full flex items-center justify-center" style={{ width: 72, height: 72, background: C.mint }}>
+              <CheckCircle2 size={38} color={C.teal} />
             </div>
-            <h1 className="serif" style={{ fontSize: 28, fontWeight: 700, color: C.teal }}>
-              ¡Gracias, {contacto.contacto.split(" ")[0]}!
+            <h1 className="serif" style={{ fontSize: 30, fontWeight: 700, color: C.teal }}>
+              ¡Gracias{form.nombre ? `, ${form.nombre.split(" ")[0]}` : ""}!
             </h1>
-            <p className="mt-2 text-sm" style={{ color: C.sub, maxWidth: 420, margin: "8px auto 0" }}>
-              Hemos recibido tu información y diagnóstico. Un asesor de KAPI Service Group se pondrá en contacto contigo pronto con una propuesta personalizada.
+            <p className="mt-3 text-sm" style={{ color: C.sub, maxWidth: 440, margin: "12px auto 0", lineHeight: 1.6 }}>
+              Recibimos tu información. Nuestro equipo de KAPI Service Group revisará lo que nos
+              compartiste y te contactará pronto para conversar sobre tu tablero de analítica de nómina.
             </p>
           </div>
 
-          <div className="rounded-2xl p-6 mb-5" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
-            <h2 className="serif mb-3" style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>
-              ¿Qué sigue?
-            </h2>
+          <div className="rounded-2xl p-6" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
+            <h2 className="serif mb-3" style={{ fontSize: 17, fontWeight: 700, color: C.ink }}>¿Qué sigue?</h2>
             <div className="space-y-3">
               {[
-                ["1", "Revisamos tu diagnóstico", "Nuestro equipo analiza las respuestas para dimensionar tu proyecto."],
-                ["2", "Te contactamos", "Un asesor te presentará una propuesta detallada y personalizada."],
-                ["3", "Arrancamos juntos", "Definimos el plan de implementación y comenzamos a trabajar."],
-              ].map(([n, title, desc]) => (
-                <div key={n} className="flex items-start gap-3">
+                ["1", "Revisamos tu solicitud", "Analizamos lo que nos contaste sobre tu nómina."],
+                ["2", "Te contactamos", "Un asesor se comunicará contigo para entender mejor tus necesidades."],
+                ["3", "Diseñamos tu propuesta", "Definimos juntos el tablero ideal para tu empresa."],
+              ].map(([num, title, desc]) => (
+                <div key={num} className="flex items-start gap-3">
                   <div className="rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ width: 28, height: 28, background: C.mint, color: C.teal, fontSize: 13, fontWeight: 700 }}>
-                    {n}
+                    {num}
                   </div>
                   <div>
                     <p className="text-sm" style={{ fontWeight: 600, color: C.ink }}>{title}</p>
@@ -441,21 +209,7 @@ export default function FormularioPublico() {
             </div>
           </div>
 
-          <div className="rounded-2xl p-5 text-center" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
-            <p className="text-sm font-semibold" style={{ color: C.ink }}>¿Deseas agilizar el proceso?</p>
-            <p className="text-xs mt-1 mb-3" style={{ color: C.sub }}>
-              Escríbenos directamente y te atendemos de inmediato.
-            </p>
-            <a
-              href="mailto:info@kapisg.com"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition"
-              style={{ background: C.teal, color: "#fff" }}
-            >
-              <Send size={15} /> Contactar a un asesor
-            </a>
-          </div>
-
-          <p className="text-center text-xs mt-6" style={{ color: C.sub }}>
+          <p className="text-center text-xs mt-8" style={{ color: C.sub }}>
             KAPI Service Group · Quito, Ecuador — Tu información es confidencial
           </p>
         </div>
@@ -463,175 +217,136 @@ export default function FormularioPublico() {
     );
   }
 
-  /* ── step 0: contact info ── */
-  if (step === 0) {
-    return (
-      <div style={{ background: C.paper, minHeight: "100vh" }}>
-        <style>{FONT_CSS}</style>
-        <Header />
-        <div className="max-w-2xl mx-auto px-6 py-8">
-          <ProgressBar step={0} />
-
-          <div className="mb-6">
-            <h1 className="serif" style={{ fontSize: 26, fontWeight: 700, color: C.ink }}>
-              Solicita tu cotización
-            </h1>
-            <p className="mt-2 text-sm" style={{ color: C.sub }}>
-              Completa el formulario y generaremos una pre-cotización basada en el perfil de tu empresa.
-            </p>
-          </div>
-
-          <div className="space-y-5">
-            {/* Contact data */}
-            <div className="rounded-2xl p-6 space-y-4" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
-              <h2 className="serif" style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>Datos de contacto</h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Empresa" required>
-                  <Input value={contacto.empresa} onChange={(e) => setC("empresa", e.target.value)} placeholder="Nombre de la empresa" />
-                </Field>
-                <Field label="Contacto" required>
-                  <Input value={contacto.contacto} onChange={(e) => setC("contacto", e.target.value)} placeholder="Nombre completo" />
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Correo electrónico" required>
-                  <Input type="email" value={contacto.email} onChange={(e) => setC("email", e.target.value)} placeholder="correo@empresa.com" />
-                </Field>
-                <Field label="Teléfono">
-                  <Input value={contacto.telefono} onChange={(e) => setC("telefono", e.target.value)} placeholder="+593 ..." />
-                </Field>
-              </div>
-            </div>
-
-            {/* Company info */}
-            <div className="rounded-2xl p-6 space-y-4" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
-              <h2 className="serif" style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>Sobre tu empresa</h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Sector">
-                  <select
-                    value={contacto.sector}
-                    onChange={(e) => setC("sector", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-                    style={inputStyle}
-                  >
-                    <option value="">Seleccionar...</option>
-                    {SECTORES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </Field>
-                <Field label="Cantidad de empleados">
-                  <select
-                    value={contacto.empleados_rango}
-                    onChange={(e) => setC("empleados_rango", e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-                    style={inputStyle}
-                  >
-                    <option value="">Seleccionar...</option>
-                    {RANGOS_EMPLEADOS.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </Field>
-              </div>
-
-              <Field label="Mensaje (opcional)">
-                <textarea
-                  value={contacto.mensaje}
-                  onChange={(e) => setC("mensaje", e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm outline-none resize-none"
-                  style={inputStyle}
-                  placeholder="Cuéntanos qué necesitas o qué retos tienes con tu nómina..."
-                />
-              </Field>
-            </div>
-
-            {error && (
-              <div className="rounded-xl p-3 text-sm" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-                {error}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => { if (validarContacto()) setStep(1); }}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm transition"
-              style={{ background: C.teal, color: "#fff", fontWeight: 700 }}
-            >
-              Continuar al diagnóstico <ChevronRight size={18} />
-            </button>
-
-            <p className="text-center text-xs" style={{ color: C.sub }}>
-              KAPI Service Group · Quito, Ecuador — Tu información es confidencial
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ── step 1: diagnostic ── */
+  /* ── formulario ── */
   return (
     <div style={{ background: C.paper, minHeight: "100vh" }}>
       <style>{FONT_CSS}</style>
-      <Header />
-      <div className="max-w-2xl mx-auto px-6 py-8">
-        <ProgressBar step={1} />
+      <BrandHeader />
 
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <h1 className="serif" style={{ fontSize: 26, fontWeight: 700, color: C.ink }}>
-            Diagnóstico rápido
+          <h1 className="serif" style={{ fontSize: 27, fontWeight: 700, color: C.ink }}>
+            Cuéntanos sobre tu nómina
           </h1>
-          <p className="mt-2 text-sm" style={{ color: C.sub }}>
-            Estas {DIAGNOSTICO.length} preguntas nos ayudan a calcular una pre-cotización ajustada a tu realidad. Solo toma 2 minutos.
+          <p className="mt-2 text-sm" style={{ color: C.sub, lineHeight: 1.6 }}>
+            Déjanos tus datos y unas respuestas rápidas. Con eso preparamos una propuesta de
+            tablero de analítica de nómina a tu medida. Solo toma un par de minutos.
           </p>
         </div>
 
-        <div className="space-y-4">
-          {DIAGNOSTICO.map((q) => (
-            <RadioGroup
-              key={q.id}
-              question={q}
-              value={respuestas[q.id]}
-              onChange={(score) => setR(q.id, score)}
-            />
-          ))}
+        {/* Datos de contacto */}
+        <div className="rounded-2xl p-6 space-y-4 mb-5" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
+          <h2 className="serif" style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>Tus datos</h2>
 
-          {error && (
-            <div className="rounded-xl p-3 text-sm" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => { setError(""); setStep(0); }}
-              className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl text-sm transition"
-              style={{ background: "#fff", color: C.teal, fontWeight: 600, border: `1px solid ${C.line}` }}
-            >
-              <ChevronLeft size={17} /> Volver
-            </button>
-
-            <button
-              type="button"
-              disabled={enviando}
-              onClick={() => { if (validarDiagnostico()) handleSubmit(); }}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm transition"
-              style={{ background: C.teal, color: "#fff", fontWeight: 700, opacity: enviando ? 0.7 : 1 }}
-            >
-              {enviando
-                ? <><Loader2 size={18} className="animate-spin" /> Calculando...</>
-                : <><Send size={18} /> Ver mi pre-cotización</>
-              }
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Nombre y apellido" required icon={Users}>
+              <TextInput value={form.nombre} onChange={(e) => set("nombre", e.target.value)} placeholder="Tu nombre completo" />
+            </Field>
+            <Field label="Empresa" required icon={Building2}>
+              <TextInput value={form.empresa} onChange={(e) => set("empresa", e.target.value)} placeholder="Nombre de tu empresa" />
+            </Field>
           </div>
 
-          <p className="text-center text-xs" style={{ color: C.sub }}>
-            KAPI Service Group · Quito, Ecuador — Tu información es confidencial
-          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Correo" required icon={Mail}>
+              <TextInput type="email" value={form.correo} onChange={(e) => set("correo", e.target.value)} placeholder="correo@empresa.com" />
+            </Field>
+            <Field label="Teléfono / WhatsApp" required icon={Phone}>
+              <TextInput value={form.telefono} onChange={(e) => set("telefono", e.target.value)} placeholder="+593 ..." />
+            </Field>
+          </div>
+
+          <Field label="Sector / industria" icon={Briefcase}>
+            <Select value={form.sector} onChange={(e) => set("sector", e.target.value)}
+              placeholder="Selecciona tu sector (opcional)" options={SECTORES} />
+          </Field>
         </div>
-      </div>
+
+        {/* Preguntas amigables */}
+        <div className="rounded-2xl p-6 space-y-4 mb-5" style={{ background: "#fff", border: `1px solid ${C.line}` }}>
+          <h2 className="serif" style={{ fontSize: 16, fontWeight: 600, color: C.ink }}>Sobre tu nómina hoy</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="¿Cuántas empresas o razones sociales manejan en su nómina?" icon={Building2}>
+              <Select value={form.num_empresas} onChange={(e) => set("num_empresas", e.target.value)}
+                placeholder="Selecciona una opción" options={OPCIONES_EMPRESAS} />
+            </Field>
+            <Field label="¿Aproximadamente cuántas personas tienen en nómina?" icon={Users}>
+              <Select value={form.num_empleados} onChange={(e) => set("num_empleados", e.target.value)}
+                placeholder="Selecciona un rango" options={OPCIONES_EMPLEADOS} />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="¿Cómo entregan hoy la información de nómina?" icon={Database}>
+              <Select value={form.formato_datos} onChange={(e) => set("formato_datos", e.target.value)}
+                placeholder="Selecciona una opción" options={OPCIONES_FORMATO} />
+            </Field>
+            <Field label="¿Cada cuánto se actualiza la información?" icon={CalendarClock}>
+              <Select value={form.frecuencia} onChange={(e) => set("frecuencia", e.target.value)}
+                placeholder="Selecciona una opción" options={OPCIONES_FRECUENCIA} />
+            </Field>
+          </div>
+
+          <Field label="¿Qué les gustaría poder ver o medir con un tablero?" icon={Target}>
+            <textarea
+              value={form.objetivos}
+              onChange={(e) => set("objetivos", e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2.5 rounded-xl text-sm outline-none resize-none"
+              style={inputStyle}
+              placeholder="Ej. costos de nómina por área, rotación, horas extra, ausentismo..."
+            />
+          </Field>
+
+          <Field label="¿Algo más que debamos saber?" icon={MessageSquare}>
+            <textarea
+              value={form.notas}
+              onChange={(e) => set("notas", e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2.5 rounded-xl text-sm outline-none resize-none"
+              style={inputStyle}
+              placeholder="Opcional — cualquier detalle que nos ayude a entender tu caso."
+            />
+          </Field>
+        </div>
+
+        {/* Honeypot oculto — los humanos no lo ven; los bots tienden a llenarlo. */}
+        <div style={{ position: "absolute", left: "-9999px" }} aria-hidden="true">
+          <label>
+            No llenar este campo
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={form.website}
+              onChange={(e) => set("website", e.target.value)}
+            />
+          </label>
+        </div>
+
+        {error && (
+          <div className="rounded-xl p-3 text-sm mb-4" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={enviando}
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm transition"
+          style={{ background: C.teal, color: "#fff", fontWeight: 700, opacity: enviando ? 0.7 : 1 }}
+        >
+          {enviando
+            ? <><Loader2 size={18} className="animate-spin" /> Enviando...</>
+            : <><Send size={18} /> Solicitar diagnóstico</>
+          }
+        </button>
+
+        <p className="text-center text-xs mt-6" style={{ color: C.sub }}>
+          KAPI Service Group · Quito, Ecuador — Tu información es confidencial
+        </p>
+      </form>
     </div>
   );
 }

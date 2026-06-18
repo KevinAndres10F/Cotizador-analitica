@@ -26,16 +26,23 @@ function doPost(e) {
       + '<div style="background:#fff;padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">'
       + '<table style="width:100%;border-collapse:collapse">'
       + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px;width:120px">Empresa</td><td style="padding:8px 0;font-weight:600">' + (lead.empresa || "-") + '</td></tr>'
-      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Contacto</td><td style="padding:8px 0;font-weight:600">' + (lead.contacto || "-") + '</td></tr>'
-      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Email</td><td style="padding:8px 0"><a href="mailto:' + (lead.email || "") + '" style="color:#1a4d42">' + (lead.email || "-") + '</a></td></tr>'
+      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Contacto</td><td style="padding:8px 0;font-weight:600">' + (lead.nombre || "-") + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Correo</td><td style="padding:8px 0"><a href="mailto:' + (lead.correo || "") + '" style="color:#1a4d42">' + (lead.correo || "-") + '</a></td></tr>'
       + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Teléfono</td><td style="padding:8px 0">' + (lead.telefono || "-") + '</td></tr>'
       + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Sector</td><td style="padding:8px 0">' + (lead.sector || "-") + '</td></tr>'
-      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Empleados</td><td style="padding:8px 0">' + (lead.empleados_rango || "-") + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Empresas</td><td style="padding:8px 0">' + (lead.num_empresas || "-") + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Personas en nómina</td><td style="padding:8px 0">' + (lead.num_empleados || "-") + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Formato de datos</td><td style="padding:8px 0">' + (lead.formato_datos || "-") + '</td></tr>'
+      + '<tr><td style="padding:8px 0;color:#6b7280;font-size:13px">Frecuencia</td><td style="padding:8px 0">' + (lead.frecuencia || "-") + '</td></tr>'
       + '</table>';
 
-    if (lead.mensaje) {
+    if (lead.objetivos) {
       html += '<div style="margin-top:16px;padding:12px;background:#f9fafb;border-radius:8px;font-size:13px">'
-        + '<strong>Mensaje:</strong><br/>' + lead.mensaje + '</div>';
+        + '<strong>Qué quieren ver / medir:</strong><br/>' + lead.objetivos + '</div>';
+    }
+    if (lead.notas) {
+      html += '<div style="margin-top:8px;padding:12px;background:#f9fafb;border-radius:8px;font-size:13px">'
+        + '<strong>Notas:</strong><br/>' + lead.notas + '</div>';
     }
 
     html += '<p style="margin-top:20px;font-size:12px;color:#9ca3af">Revisa los leads en el cotizador → pestaña Leads (vista interna)</p>'

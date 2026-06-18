@@ -1,6 +1,23 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://zouznrwrirsisdqipcfb.supabase.co";
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvdXpucndyaXJzaXNkcWlwY2ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwMDQ2MTEsImV4cCI6MjA4MTU4MDYxMX0.0zjKGv24UCSm6cR37sFklHyEVScLKg8J0QT_EyL5xws";
+// Las credenciales viven en variables de entorno (NUNCA hardcodeadas).
+//   - Local:   archivo .env  (ver .env.example)
+//   - Netlify: Site settings > Environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+
+if (!supabaseConfigured) {
+  console.error(
+    "[Supabase] Faltan VITE_SUPABASE_URL y/o VITE_SUPABASE_ANON_KEY. " +
+    "Configúralas en .env (local) y en Netlify (Site settings > Environment variables)."
+  );
+}
+
+// Fallback a placeholders solo para evitar que la app se caiga al importar
+// cuando faltan las env vars; cualquier operación real fallará con un mensaje claro.
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseKey || "placeholder-anon-key"
+);
