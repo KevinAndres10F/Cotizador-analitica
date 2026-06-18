@@ -41,35 +41,21 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /* ─── sub-componentes ─────────────────────────────────────────────── */
 
-/* Ícono "M" de ManpowerGroup: 4 barras inclinadas con los colores oficiales
-   (azul / azul claro / verde salvia / naranja). SVG nativo y escalable. */
-function ManpowerMark({ size = 28 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
-      <g transform="skewX(-12) translate(20 0)">
-        <rect x="0"  y="56" width="15" height="38" rx="7.5" fill="#466ea5" />
-        <rect x="21" y="44" width="15" height="50" rx="7.5" fill="#6390c6" />
-        <rect x="42" y="30" width="15" height="64" rx="7.5" fill="#6e8f82" />
-        <rect x="63" y="14" width="15" height="80" rx="7.5" fill="#e77c22" />
-      </g>
-    </svg>
-  );
-}
-
 function BrandHeader() {
   return (
     <div style={{ background: C.teal }}>
-      <div className="max-w-2xl mx-auto px-6 py-5 flex items-center gap-3">
-        <div className="rounded-xl flex items-center justify-center" style={{ width: 44, height: 44, background: "#fff" }}>
-          <ManpowerMark size={28} />
+      <div className="max-w-2xl mx-auto px-6 py-5">
+        {/* Logo oficial horizontal de ManpowerGroup sobre tarjeta blanca
+            (el wordmark es azul y necesita fondo claro para ser legible). */}
+        <div className="inline-flex items-center rounded-xl px-3.5 py-2.5" style={{ background: "#fff" }}>
+          <img
+            src="/MPG_BE_Logo_SS_HOR_MC_RGB_REG.png"
+            alt="ManpowerGroup"
+            style={{ height: 30, width: "auto", display: "block" }}
+          />
         </div>
-        <div>
-          <div className="serif" style={{ color: "#fff", fontSize: 21, fontWeight: 600, lineHeight: 1.1 }}>
-            Manpower
-          </div>
-          <div style={{ color: "#c3d4ea", fontSize: 12.5, letterSpacing: ".04em" }}>
-            ANALÍTICA DE NÓMINA · POWERED BY KAPI SERVICE GROUP
-          </div>
+        <div style={{ color: "#c3d4ea", fontSize: 12.5, letterSpacing: ".04em", marginTop: 10 }}>
+          ANALÍTICA DE NÓMINA · POWERED BY KAPI SERVICE GROUP
         </div>
       </div>
     </div>
@@ -197,7 +183,7 @@ export default function FormularioPublico() {
               ¡Gracias{form.nombre ? `, ${form.nombre.split(" ")[0]}` : ""}!
             </h1>
             <p className="mt-3 text-sm" style={{ color: C.sub, maxWidth: 440, margin: "12px auto 0", lineHeight: 1.6 }}>
-              Recibimos tu información. Nuestro equipo de Manpower (powered by Kapi Service Group)
+              Recibimos tu información. Nuestro equipo de ManpowerGroup (powered by Kapi Service Group)
               revisará lo que nos compartiste y te contactará pronto para conversar sobre tu tablero
               de analítica de nómina.
             </p>
@@ -226,7 +212,7 @@ export default function FormularioPublico() {
           </div>
 
           <p className="text-center text-xs mt-8" style={{ color: C.sub }}>
-            Manpower · Powered by Kapi Service Group — Tu información es confidencial
+            ManpowerGroup · Powered by Kapi Service Group — Tu información es confidencial
           </p>
         </div>
       </div>
@@ -360,7 +346,7 @@ export default function FormularioPublico() {
         </button>
 
         <p className="text-center text-xs mt-6" style={{ color: C.sub }}>
-          Manpower · Powered by Kapi Service Group — Tu información es confidencial
+          ManpowerGroup · Powered by Kapi Service Group — Tu información es confidencial
         </p>
       </form>
     </div>
