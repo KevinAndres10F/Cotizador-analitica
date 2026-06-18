@@ -43,7 +43,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function BrandHeader() {
   return (
-    <div style={{ background: C.teal }}>
+    <div style={{ background: C.grad }}>
       <div className="max-w-2xl mx-auto px-6 py-5">
         {/* Logo oficial horizontal de ManpowerGroup sobre tarjeta blanca
             (el wordmark es azul y necesita fondo claro para ser legible). */}

@@ -13,4 +13,6 @@ export const C = {
   sub:     "#67696f", // gris: texto secundario
   line:    "#e2e7ee", // borde claro
   paper:   "#f6f8fb", // off-white de fondo
+  // Degradado de marca azul → verde (imita el "desvanecido" de manpowergroup.ec)
+  grad:    "linear-gradient(150deg, #466ea5 0%, #4a8a86 52%, #5ea65a 100%)",
 };
